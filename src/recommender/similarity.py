@@ -112,17 +112,31 @@ def parse_facilities(raw: str) -> list[str]:
     return re.findall(r"'(.*?)'", raw or "")
 
 
+_DISTANCE_RE = re.compile(
+    r"^\s*([\d.]+)\s*(km|kms|m|meter|meters|mtr|mtrs)\.?\s*$", re.IGNORECASE
+)
+
+
 def distance_to_metres(distance_str: str) -> float | None:
-    """``'2.5 KM'`` -> ``2500.0``; ``'800 Meter'`` -> ``800.0``; else ``None``."""
-    try:
-        s = str(distance_str)
-        if "Km" in s or "KM" in s:
-            return float(s.split()[0]) * 1000
-        if "Meter" in s or "meter" in s:
-            return float(s.split()[0])
-    except (ValueError, IndexError):
+    """Parse a distance string to metres.
+
+    Handles the many formats in ``LocationAdvantages``: ``'2.5 KM'``, ``'2.5km'``,
+    ``'1.5 kms'``, ``'800 Meter'``, ``'450 m'``, ``'800 M'`` (case-insensitive,
+    space optional). Returns ``None`` for time strings (``'10 mins'``,
+    ``'5 minutes drive'``) and vague text (``'Close Proximity'``) -- there is no
+    distance to extract without a speed assumption.
+
+    (The earlier version only matched ``'Km'``/``'KM'`` and ``'Meter'``/``'meter'``
+    and silently dropped ~20 % of the real distances.)
+    """
+    m = _DISTANCE_RE.match(str(distance_str))
+    if not m:
         return None
-    return None
+    try:
+        value = float(m.group(1))
+    except ValueError:
+        return None
+    return value * 1000 if m.group(2).lower().startswith("k") else value
 
 
 def parse_price_details(detail_str: str) -> dict:
