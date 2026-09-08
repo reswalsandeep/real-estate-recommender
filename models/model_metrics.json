@@ -1,0 +1,227 @@
+{
+  "created_utc": "2026-09-08T10:20:11+00:00",
+  "random_state": 42,
+  "sklearn_version": "1.9.0",
+  "data_file": "data/processed/gurgaon_properties_post_feature_selection_v2.csv",
+  "data_shape": [
+    3554,
+    13
+  ],
+  "n_train": 2843,
+  "n_test": 711,
+  "target_transform": "log1p(price)",
+  "feature_columns": [
+    "bedRoom",
+    "bathroom",
+    "built_up_area",
+    "servant room",
+    "store room",
+    "sector",
+    "balcony",
+    "agePossession",
+    "furnishing_type",
+    "luxury_category",
+    "floor_category",
+    "property_type"
+  ],
+  "encoding": {
+    "numeric": {
+      "cols": [
+        "bedRoom",
+        "bathroom",
+        "built_up_area",
+        "servant room",
+        "store room"
+      ],
+      "encoder": "StandardScaler"
+    },
+    "sector": {
+      "encoder": "TargetEncoder",
+      "internal_cv": true,
+      "n_categories": 104
+    },
+    "ordinal": {
+      "cols": [
+        "balcony",
+        "agePossession",
+        "furnishing_type",
+        "luxury_category",
+        "floor_category"
+      ],
+      "encoder": "OrdinalEncoder",
+      "order": {
+        "balcony": [
+          "0",
+          "1",
+          "2",
+          "3",
+          "3+"
+        ],
+        "agePossession": [
+          "Under Construction",
+          "New Property",
+          "Relatively New",
+          "Moderately Old",
+          "Old Property"
+        ],
+        "furnishing_type": [
+          "0.0",
+          "1.0",
+          "2.0"
+        ],
+        "luxury_category": [
+          "Low",
+          "Medium",
+          "High"
+        ],
+        "floor_category": [
+          "Low Floor",
+          "Mid Floor",
+          "High Floor"
+        ]
+      }
+    },
+    "nominal": {
+      "cols": [
+        "property_type"
+      ],
+      "encoder": "OneHotEncoder(drop=if_binary)"
+    }
+  },
+  "search": {
+    "type": "RandomizedSearchCV",
+    "n_iter": 60,
+    "cv_folds": 10,
+    "scoring": "r2",
+    "target": "log1p(price)",
+    "best_cv_r2_mean": 0.8811269816408457,
+    "best_cv_r2_std": 0.016074636582591305,
+    "n_candidates_evaluated": 60,
+    "best_params": {
+      "regressor__n_estimators": 500,
+      "regressor__max_samples": 1.0,
+      "regressor__max_features": "sqrt",
+      "regressor__max_depth": 20
+    }
+  },
+  "exported_model": {
+    "provenance": "search.best_estimator_, refit by RandomizedSearchCV on X_train only; exported without modification",
+    "file": "models/price_pipeline.pkl",
+    "test_metrics": {
+      "r2_log": 0.9102361492443878,
+      "r2_crore": 0.8514287295813429,
+      "mae_crore": 0.49129562350854594,
+      "rmse_crore": 1.0685932584613655,
+      "n": 711
+    },
+    "train_metrics": {
+      "r2_log": 0.9751968848669672,
+      "r2_crore": 0.9522540554655426,
+      "mae_crore": 0.25547432538511244,
+      "rmse_crore": 0.6087986633713054,
+      "n": 2843
+    }
+  },
+  "error_by_price_band": {
+    "description": "Held-out MAE by crore price band for the exported model. A standing model limitation, independent of the train/test split: absolute error rises steeply with price.",
+    "scale": "crore",
+    "bands": [
+      {
+        "band_cr": [
+          0.0,
+          1.0
+        ],
+        "n": 187,
+        "share": 0.263,
+        "mae_crore": 0.16613757271459476,
+        "rmse_crore": 0.24940343669546236
+      },
+      {
+        "band_cr": [
+          1.0,
+          2.0
+        ],
+        "n": 271,
+        "share": 0.3812,
+        "mae_crore": 0.23471713629938684,
+        "rmse_crore": 0.3592498719767186
+      },
+      {
+        "band_cr": [
+          2.0,
+          3.0
+        ],
+        "n": 101,
+        "share": 0.1421,
+        "mae_crore": 0.3853090396253201,
+        "rmse_crore": 0.5160930292772875
+      },
+      {
+        "band_cr": [
+          3.0,
+          5.0
+        ],
+        "n": 61,
+        "share": 0.0858,
+        "mae_crore": 0.8643945856269842,
+        "rmse_crore": 1.1644911676103842
+      },
+      {
+        "band_cr": [
+          5.0,
+          null
+        ],
+        "n": 91,
+        "share": 0.128,
+        "mae_crore": 1.7911080830154917,
+        "rmse_crore": 2.6842187234892716
+      }
+    ]
+  },
+  "split_representativeness_check": {
+    "question": "Held-out test R2 (log) landed above the CV mean; is the test split unrepresentative of the training data?",
+    "cv_r2_log_mean": 0.8811269816408457,
+    "cv_r2_log_std": 0.016074636582591305,
+    "test_r2_log_bootstrap_ci": {
+      "point": 0.9102361492443878,
+      "ci_lower": 0.8939144315042499,
+      "ci_upper": 0.9244424844695605,
+      "n_boot": 2000,
+      "alpha": 0.05
+    },
+    "price_distribution": {
+      "train": {
+        "n": 2843,
+        "mean": 2.44268026732325,
+        "std": 2.7866462364528575,
+        "min": 0.07,
+        "p25": 0.95,
+        "p50": 1.54,
+        "p75": 2.65,
+        "p95": 8.000000000000002,
+        "p99": 13.789999999999964,
+        "max": 31.5
+      },
+      "test": {
+        "n": 711,
+        "mean": 2.4369479606188467,
+        "std": 2.774282213239406,
+        "min": 0.21,
+        "p25": 0.95,
+        "p50": 1.4500000000000002,
+        "p75": 2.625,
+        "p95": 8.42,
+        "p99": 14.899999999999975,
+        "max": 18.999999999999996
+      },
+      "ks_2samp": {
+        "statistic": 0.039938695134445756,
+        "pvalue": 0.31405836571782403
+      },
+      "mann_whitney_u": {
+        "pvalue": 0.5926766037159823
+      }
+    },
+    "conclusion": "Representative. Train vs. test price distributions are statistically indistinguishable (KS 2-sample and Mann-Whitney U p-values both well above 0.05). The gap between the test R2 and the CV mean is expected variance, not a biased split: (1) each CV fold trains on ~90% of the training split while the exported model refits on all of it, so k-fold is structurally pessimistic; (2) the reported CV std is the spread across folds, not the standard error of their mean; (3) each CV fold is scored on ~1/10 of the training split, far noisier than the single held-out set; (4) the most expensive properties all fell in the training portion, so CV validation folds are penalised by large errors the held-out set never sees. No rebuild warranted; treat the CV R2 as the conservative headline number."
+  }
+}
