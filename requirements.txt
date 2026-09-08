@@ -8,7 +8,10 @@ joblib>=1.3
 
 # Explainability — src/models/explain.py (§5 point 4)
 shap>=0.44
-matplotlib>=3.7   # SHAP plots in notebooks/10_model_explainability.ipynb
+matplotlib>=3.7   # SHAP plots + the committed sector-price map (§4)
+
+# Sector price map — src/features/geo.py (§4)
+plotly>=5.24      # px.scatter_map (MapLibre / OpenStreetMap tiles, no token); interactive use only
 
 # Notebook execution for notebooks/08_model_training.ipynb
 jupyter>=1.0
