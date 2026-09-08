@@ -158,6 +158,21 @@ def build_pipeline() -> Pipeline:
     )
 
 
+def split_dataset(
+    X: pd.DataFrame,
+    y_log: pd.Series,
+    test_size: float = 0.2,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+    """The one train/test split, so every consumer gets the identical hold-out.
+
+    Thin wrapper over ``train_test_split`` pinned to ``random_state=RANDOM_STATE``.
+    Used by :func:`train_and_export` and by ``src/models/explain.py`` (so its
+    global SHAP summary is computed on exactly the rows the shipped model was
+    fit on).
+    """
+    return train_test_split(X, y_log, test_size=test_size, random_state=RANDOM_STATE)
+
+
 def run_search(
     X_train: pd.DataFrame,
     y_train_log: pd.Series,
@@ -207,9 +222,7 @@ def train_and_export(
     raw_shape = list(pd.read_csv(data_path).shape)
     y_log = np.log1p(y)
 
-    X_train, X_test, y_train_log, y_test_log = train_test_split(
-        X, y_log, test_size=test_size, random_state=RANDOM_STATE
-    )
+    X_train, X_test, y_train_log, y_test_log = split_dataset(X, y_log, test_size=test_size)
 
     search = run_search(X_train, y_train_log, n_iter=n_iter)
     model = search.best_estimator_  # exported verbatim -- no rebuild

@@ -1,0 +1,112 @@
+{
+  "created_utc": "2026-09-08T11:36:49+00:00",
+  "model_file": "models/price_pipeline.pkl",
+  "n_rows_explained": 400,
+  "n_rows_available": 2843,
+  "basis": "random 400-row sample (random_state=42) of the training split (test_size=0.2, random_state=42) -- the rows the shipped model was fit on",
+  "shap_units": "log1p(price)",
+  "base_value_log": 1.0467366156916769,
+  "base_value_cr": 1.8483407042377458,
+  "features": [
+    {
+      "feature": "built_up_area",
+      "label": "built_up_area",
+      "mean_abs_shap_log": 0.1698122345390151,
+      "rf_impurity_importance": 0.32669303823552726
+    },
+    {
+      "feature": "sector",
+      "label": "sector",
+      "mean_abs_shap_log": 0.16149038267018478,
+      "rf_impurity_importance": 0.24517104572965928
+    },
+    {
+      "feature": "bathroom",
+      "label": "bathroom",
+      "mean_abs_shap_log": 0.07605327105800397,
+      "rf_impurity_importance": 0.11568367015989242
+    },
+    {
+      "feature": "property_type_house",
+      "label": "property_type (house=1)",
+      "mean_abs_shap_log": 0.07022535488509753,
+      "rf_impurity_importance": 0.06455279848234446
+    },
+    {
+      "feature": "bedRoom",
+      "label": "bedRoom",
+      "mean_abs_shap_log": 0.06233215873906695,
+      "rf_impurity_importance": 0.1178832680989989
+    },
+    {
+      "feature": "servant room",
+      "label": "servant room",
+      "mean_abs_shap_log": 0.034717294953686334,
+      "rf_impurity_importance": 0.03424574976961587
+    },
+    {
+      "feature": "balcony",
+      "label": "balcony",
+      "mean_abs_shap_log": 0.02595688128396385,
+      "rf_impurity_importance": 0.03081339118485048
+    },
+    {
+      "feature": "agePossession",
+      "label": "agePossession",
+      "mean_abs_shap_log": 0.012521599779290323,
+      "rf_impurity_importance": 0.01886442924689085
+    },
+    {
+      "feature": "furnishing_type",
+      "label": "furnishing_type",
+      "mean_abs_shap_log": 0.011814809708062628,
+      "rf_impurity_importance": 0.012804166325144936
+    },
+    {
+      "feature": "store room",
+      "label": "store room",
+      "mean_abs_shap_log": 0.009469580414492685,
+      "rf_impurity_importance": 0.011459587720050315
+    },
+    {
+      "feature": "floor_category",
+      "label": "floor_category",
+      "mean_abs_shap_log": 0.009302138177827157,
+      "rf_impurity_importance": 0.011887527323479469
+    },
+    {
+      "feature": "luxury_category",
+      "label": "luxury_category",
+      "mean_abs_shap_log": 0.005898733742291357,
+      "rf_impurity_importance": 0.00994132772354583
+    }
+  ],
+  "shap_rank": [
+    "built_up_area",
+    "sector",
+    "bathroom",
+    "property_type_house",
+    "bedRoom",
+    "servant room",
+    "balcony",
+    "agePossession",
+    "furnishing_type",
+    "store room",
+    "floor_category",
+    "luxury_category"
+  ],
+  "rf_impurity_rank": [
+    "built_up_area",
+    "sector",
+    "bedRoom",
+    "bathroom",
+    "property_type_house",
+    "servant room",
+    "balcony",
+    "agePossession",
+    "furnishing_type",
+    "floor_category",
+    "store room",
+    "luxury_category"
+  ]
+}
