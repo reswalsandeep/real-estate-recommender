@@ -41,6 +41,15 @@ Weak spots, flagged rather than silently kept or fixed:
 - **Encoder fit on the full frame**, before any train/test split (cell 19).
 - **``price_per_sqft`` dropped here** (cell 5) is the stale one from the
   missing-values stage; its staleness never propagates past this point.
+- **``low_importance_drop`` is accepted but effectively pinned.**
+  ``select_features`` reindexes to the hard-coded 13-column
+  :data:`OUTPUT_COLUMNS` before returning, so any value other than the default
+  ``("pooja room", "study room", "others")`` either no-ops (a shorter list
+  still yields the same 13 columns) or raises ``KeyError`` (dropping a column
+  that ``OUTPUT_COLUMNS`` still names). The parameter reads as configurable but
+  only the default works. Documented-not-fixed: zero functional impact today
+  (the export is correct), and not worth touching a validated module for API
+  honesty alone -- see ``PROJECT_PLAN.md`` Section 11.
 """
 
 from __future__ import annotations
