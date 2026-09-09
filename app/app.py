@@ -27,7 +27,7 @@ import streamlit as st
 from views import market_insights, price_prediction, recommendations, sector_map
 
 st.set_page_config(
-    page_title="Gurgaon Real Estate",
+    page_title="Real Estate Price Predictor & Recommender",
     layout="wide",
 )
 
