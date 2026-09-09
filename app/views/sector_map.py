@@ -27,7 +27,7 @@ from lib.loaders import load_sector_map_frame
 
 
 def render() -> None:
-    st.title("\U0001F5FA️ Sector Map")
+    st.title("Sector Map")
     st.caption(
         "Average price per square foot across Gurgaon's sectors. Each dot sits at the "
         "centre of a sector; bigger dots are sectors with larger homes on average. "

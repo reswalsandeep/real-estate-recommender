@@ -45,7 +45,7 @@ _FURNISHING_DISPLAY_TO_MODEL = {
 
 
 def render() -> None:
-    st.title("\U0001F50D Recommendations")
+    st.title("Recommendations")
     tab_similar, tab_landmark, tab_pref = st.tabs(
         [
             "Homes like this one",

@@ -32,7 +32,7 @@ _BALCONY = ["0", "1", "2", "3", "3+"]
 
 
 def render() -> None:
-    st.title("\U0001F4B0 Price Prediction")
+    st.title("Price Prediction")
     st.caption("Estimate the market price of a Gurgaon home from its main details.")
 
     sectors = load_sector_options()

@@ -23,7 +23,7 @@ _PLASMA = "Plasma"
 
 
 def render() -> None:
-    st.title("\U0001F4C8 Market Insights")
+    st.title("Market Insights")
     st.caption(
         "An overview of the Gurgaon market from the listings we have. "
         "Nothing on this page is a price prediction."
