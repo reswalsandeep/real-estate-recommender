@@ -3,7 +3,7 @@
 Operates on ``data/raw/appartments.csv`` (246 projects after the embedded
 header row is dropped) and answers *"which developments are most like this
 one"* — item-to-item similarity, not preference/budget matching over
-individual listings. See ``PROJECT_PLAN.md`` §10 for that scope split.
+individual listings. See ``PROJECT_PLAN.md`` Section 10 for that scope split.
 
 Import from the submodules directly, e.g.::
 

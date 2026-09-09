@@ -1,5 +1,5 @@
 """Sector coordinates: join ``data/raw/latlong.csv`` onto listings and aggregate
-per sector for the price map (``PROJECT_PLAN.md`` §4).
+per sector for the price map (``PROJECT_PLAN.md`` Section 4).
 
 Ported from ``notebooks_original/data-visualization.ipynb`` (the sector map cells).
 The core join/aggregation functions have **no plotting dependency**;
@@ -10,7 +10,7 @@ but three modelling sectors have no coordinates:
 
 * ``sector 70a`` -- recovered by :func:`join_sector_coordinates` via a
   trailing-letter-suffix fallback (``sector 70a`` -> ``sector 70``), the same
-  ``37c``/``37`` inconsistency noted in ``PROJECT_PLAN.md`` §1. Reported as a
+  ``37c``/``37`` inconsistency noted in ``PROJECT_PLAN.md`` Section 1. Reported as a
   ``fallback`` match, distinct from an exact match.
 * ``dwarka expressway``, ``sohna road`` -- road names, not sector-suffix
   variants; no fallback applies, left genuinely unmatched.
@@ -172,7 +172,7 @@ def build_sector_map(
     ``color`` and sized by ``size``.
 
     A bubble map, **not** a filled choropleth -- there is no public GeoJSON for
-    informal Gurgaon sector boundaries (``PROJECT_PLAN.md`` §4). Returns a
+    informal Gurgaon sector boundaries (``PROJECT_PLAN.md`` Section 4). Returns a
     ``plotly.graph_objects.Figure``.
 
     Known issue -- do not re-investigate in a notebook

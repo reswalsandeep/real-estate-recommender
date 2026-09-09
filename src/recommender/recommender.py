@@ -3,7 +3,7 @@
 Item-to-item similarity over the 246 Gurgaon apartment *projects* in
 ``data/raw/appartments.csv``. This is deliberately **not** a preference /
 budget / bedroom recommender over individual listings -- that is a separate,
-still-unbuilt component (``PROJECT_PLAN.md`` §10).
+still-unbuilt component (``PROJECT_PLAN.md`` Section 10).
 
     rec = SimilarProjectsRecommender.from_csv()
     rec.recommend("DLF The Arbour", k=5)

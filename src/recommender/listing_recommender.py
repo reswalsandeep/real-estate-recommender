@@ -1,4 +1,4 @@
-"""Preference-based listing recommender (``PROJECT_PLAN.md`` §10, §12).
+"""Preference-based listing recommender (``PROJECT_PLAN.md`` Section 10, Section 12).
 
 Third of the app's recommender features. Takes a **preference vector** (no
 seed-listing mode -- that is `SimilarProjectsRecommender` at the project level),
@@ -49,7 +49,7 @@ Enrichment (display only)
   ``floor_category`` that the listings table lacks; rows are position-aligned so
   no re-binning).
 * ``similar_projects`` -- for listings whose ``society`` exact-matches an
-  ``appartments.csv`` project (~49 % of rows; the §10 society bridge),
+  ``appartments.csv`` project (~49 % of rows; the Section 10 society bridge),
   ``SimilarProjectsRecommender``'s top 3. ``None`` otherwise.
 
 Both are computed for the top ``k`` only and cached; the price model and the
