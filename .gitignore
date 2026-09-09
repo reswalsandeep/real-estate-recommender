@@ -1,4 +1,5 @@
 .venv/
+data/interim/_rebuild/   # sidecar outputs from the notebook rebuild; the committed data/interim/*.csv stay canonical
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
