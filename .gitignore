@@ -6,3 +6,6 @@ __pycache__/
 
 # Large regenerable model artifacts (see models/README.md)
 models/*.pkl
+
+# kept locally for reference, removed from git history (git-filter-repo, 2026-09-10)
+notebooks_original/
