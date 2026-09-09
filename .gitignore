@@ -2,6 +2,7 @@
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
+.pytest_cache/
 *.egg-info/
 
 # kept locally for reference, removed from git history (git-filter-repo, 2026-09-10)
