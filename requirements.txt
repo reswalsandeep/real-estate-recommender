@@ -22,5 +22,13 @@ jupyter>=1.0
 nbconvert>=7
 ipykernel>=6
 
+# Faithful rebuild of the 16 original notebooks (notebooks/01..16) — libraries the
+# originals actually used, restored so their real code executes rather than being
+# rewritten around. src/ does NOT depend on any of these.
+seaborn>=0.13         # EDA + outlier + missing-value + feature-selection notebooks (distplot/positional calls fixed to the 0.13 API)
+statsmodels>=0.14     # insights-module.ipynb: sm.OLS coefficient summary
+xgboost>=2.0          # model-selection.ipynb: XGBRegressor, one of the 11 compared families
+category_encoders>=2.6  # model-selection.ipynb: ce.TargetEncoder (falls back to sklearn TargetEncoder if it won't resolve against sklearn 1.9)
+
 # Test suite — tests/ (focused parser / logic checks, not full coverage)
 pytest>=8
