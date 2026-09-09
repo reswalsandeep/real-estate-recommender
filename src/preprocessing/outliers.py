@@ -63,6 +63,14 @@ BEDROOM_MAX = 10
 SQYD_AREA_THRESHOLD = 1_000
 SQYD_TO_SQFT = 9
 
+# integer columns that pandas < 2.0 DataFrame.update upcast to float64 as a
+# side effect (see _fix_price_per_sqft_outliers); the committed CSVs carry them
+# as float, so the port matches.
+_UPDATE_UPCASTS_TO_FLOAT = [
+    "bedRoom", "bathroom", "study room", "servant room", "store room",
+    "pooja room", "others", "furnishing_type", "luxury_score",
+]
+
 # Crore -> rupees, for price_per_sqft = price / area.
 _CRORE = 10_000_000
 
@@ -128,6 +136,14 @@ def _fix_price_per_sqft_outliers(df: pd.DataFrame) -> pd.DataFrame:
     )
     outliers["price_per_sqft"] = _price_per_sqft(outliers["price"], outliers["area"])
     df.update(outliers)  # aligns on index; only non-NaN values overwrite
+
+    # pandas < 2.0 DataFrame.update upcast every column present in `other` to
+    # float64 (its internal where() fills the unmatched rows with NaN). pandas
+    # >= 2.0 preserves dtype, so the committed CSVs -- built on the old
+    # behaviour -- have these integer columns as float. Reproduce that here.
+    for col in _UPDATE_UPCASTS_TO_FLOAT:
+        df[col] = df[col].astype(float)
+
     logger.info("price_per_sqft IQR outliers rescaled: %d row(s)", len(outliers))
     return df
 
