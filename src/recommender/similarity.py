@@ -139,12 +139,50 @@ def distance_to_metres(distance_str: str) -> float | None:
     return value * 1000 if m.group(2).lower().startswith("k") else value
 
 
+_PRICE_TOKEN_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(cr|lakh|lac|l)?\b", re.IGNORECASE)
+_LAKH_UNITS = {"l", "lac", "lakh"}
+
+
+def price_range_to_crore(text: str) -> list[float]:
+    """Every rupee amount in a ``price-range`` string, in crore.
+
+    The unit is read **per number**, not per string, so a range that crosses the
+    lakh/crore boundary parses correctly:
+
+    - ``'₹ 99 L - 1.37 Cr'``   -> ``[0.99, 1.37]``   (``L`` binds only to ``99``)
+    - ``'₹ 1.35 - 6.67 Cr'``   -> ``[1.35, 6.67]``   (bare ``1.35`` inherits ``Cr``)
+    - ``'₹ 26.62 - 44.93 L'``  -> ``[0.2662, 0.4493]``
+    - ``'₹ 17 L'``             -> ``[0.17]``
+    - ``'Price on Request'``   -> ``[]``
+
+    A bare number with no unit of its own inherits the string's one explicit
+    unit (bare numbers only ever appear in same-unit ranges); a string with no
+    unit at all is assumed crore.
+
+    (The earlier split-on-``-`` parser mishandled two shapes: a lakh range with
+    ``L`` only after the second number left the low bound ~100x too large, and
+    single-value strings like ``'₹ 17 L'`` were dropped entirely.)
+    """
+    matches = _PRICE_TOKEN_RE.findall(text or "")
+    if not matches:
+        return []
+    explicit = next((u.lower() for _n, u in matches if u), None)
+    values: list[float] = []
+    for number, unit in matches:
+        unit = (unit or explicit or "cr").lower()
+        value = float(number)
+        values.append(value / 100 if unit in _LAKH_UNITS else value)
+    return values
+
+
 def parse_price_details(detail_str: str) -> dict:
     """Parse the ``PriceDetails`` JSON blob into flat per-BHK numeric features.
 
     Returns keys like ``'area low 3 BHK'``, ``'price high 2 BHK'``,
     ``'building type_2 BHK'``. Unparseable input -> ``{}`` (the notebook's
-    behaviour). Prices given in lakh (``' L'``) are converted to crore.
+    behaviour). Price strings are parsed by :func:`price_range_to_crore` (lakh
+    values converted to crore); ``price low`` / ``price high`` are the min / max
+    of the amounts found, or ``None`` when the string carries no number.
     """
     try:
         details = json.loads(str(detail_str).replace("'", '"'))
@@ -166,18 +204,11 @@ def parse_price_details(detail_str: str) -> dict:
         except (ValueError, IndexError):
             out[f"area low {bhk}"] = out[f"area high {bhk}"] = None
 
-        price_parts = detail.get("price-range", "").split("-")
-        if len(price_parts) == 2:
-            try:
-                p_lo = float(price_parts[0].replace("₹", "").replace(" Cr", "").replace(" L", "").strip())
-                p_hi = float(price_parts[1].replace("₹", "").replace(" Cr", "").replace(" L", "").strip())
-                if " L" in price_parts[0]:
-                    p_lo /= 100
-                if " L" in price_parts[1]:
-                    p_hi /= 100
-                out[f"price low {bhk}"], out[f"price high {bhk}"] = p_lo, p_hi
-            except ValueError:
-                out[f"price low {bhk}"] = out[f"price high {bhk}"] = None
+        prices = price_range_to_crore(detail.get("price-range", ""))
+        if prices:
+            out[f"price low {bhk}"], out[f"price high {bhk}"] = min(prices), max(prices)
+        else:
+            out[f"price low {bhk}"] = out[f"price high {bhk}"] = None
     return out
 
 

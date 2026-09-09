@@ -13,7 +13,6 @@ Paths are given relative to the repo root.
 from __future__ import annotations
 
 import json
-import re
 from pathlib import Path
 
 import pandas as pd
@@ -80,51 +79,15 @@ def load_amenities_text() -> str:
     return " ".join(tokens)
 
 
-_PRICE_TOKEN_RE = re.compile(r"(\d+(?:\.\d+)?)\s*(cr|lakh|lac|l)?\b", re.IGNORECASE)
-_LAKH_UNITS = {"l", "lac", "lakh"}
-
-
-def price_range_string_to_cr(text: str) -> list[float]:
-    """Every rupee amount in one ``price-range`` string, as crore.
-
-    The unit is read **per number**, not per string, so a range that crosses the
-    Lakh/Cr boundary parses correctly:
-
-    - ``'₹ 99 L - 1.37 Cr'``   -> ``[0.99, 1.37]``   (``L`` applies only to ``99``)
-    - ``'₹ 1.35 - 6.67 Cr'``   -> ``[1.35, 6.67]``   (bare ``1.35`` inherits ``Cr``)
-    - ``'₹ 26.62 - 44.93 L'``  -> ``[0.2662, 0.4493]``
-    - ``'₹ 17 L'``             -> ``[0.17]``
-    - ``'Price on Request'``   -> ``[]``
-
-    A bare number with no unit of its own inherits the string's one explicit
-    unit (they only ever appear in same-unit ranges); if the string carries no
-    unit at all it is assumed to be crore.
-    """
-    matches = _PRICE_TOKEN_RE.findall(text or "")
-    if not matches:
-        return []
-
-    explicit = next((u.lower() for _n, u in matches if u), None)
-    values: list[float] = []
-    for number, unit in matches:
-        unit = (unit or explicit or "cr").lower()
-        value = float(number)
-        values.append(value / 100 if unit in _LAKH_UNITS else value)
-    return values
-
-
 def _price_range_cr(price_details_raw: str) -> str | None:
     """A plain "₹1.49–4.34 Cr" spread from a project's raw ``PriceDetails`` blob.
 
-    Takes the overall low→high across every per-BHK ``price-range`` string, each
-    parsed by :func:`price_range_string_to_cr`.
-
-    Deliberately does **not** call
-    ``src.recommender.similarity.parse_price_details``: that function has a live
-    Lakh/Cr conversion bug (``PROJECT_PLAN.md`` Section 10). This is a
-    display-only work-around for this page, not a fix — the bug is still present
-    wherever ``parse_price_details`` itself is used.
+    Takes the overall low→high across every per-BHK ``price-range`` string,
+    each parsed by ``src.recommender.similarity.price_range_to_crore`` (the
+    shared per-number Lakh/Cr parser).
     """
+    from src.recommender.similarity import price_range_to_crore
+
     try:
         details = json.loads(str(price_details_raw).replace("'", '"'))
     except (json.JSONDecodeError, TypeError):
@@ -132,7 +95,7 @@ def _price_range_cr(price_details_raw: str) -> str | None:
 
     values: list[float] = []
     for detail in details.values():
-        values.extend(price_range_string_to_cr(str(detail.get("price-range", ""))))
+        values.extend(price_range_to_crore(str(detail.get("price-range", ""))))
 
     if not values:
         return None
