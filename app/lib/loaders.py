@@ -40,6 +40,18 @@ def load_listings() -> pd.DataFrame:
 
 
 @st.cache_data
+def load_sector_options() -> list[str]:
+    """Sorted unique ``sector`` values the price model was trained on (all 104,
+    including the four road/area names like ``sohna road``). Raw lowercase — the
+    Price Prediction form title-cases them for display only."""
+    sectors = pd.read_csv(
+        REPO_ROOT / "data/processed/gurgaon_properties_post_feature_selection_v2.csv",
+        usecols=["sector"],
+    )["sector"].unique()
+    return sorted(sectors)
+
+
+@st.cache_data
 def load_sector_map_frame() -> tuple[pd.DataFrame, dict]:
     """Per-sector aggregates + centroid coords, via ``src.features.geo``.
 
