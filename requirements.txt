@@ -21,3 +21,6 @@ wordcloud>=1.9    # amenities word cloud on the Market Insights page
 jupyter>=1.0
 nbconvert>=7
 ipykernel>=6
+
+# Test suite — tests/ (focused parser / logic checks, not full coverage)
+pytest>=8
