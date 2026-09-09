@@ -3,7 +3,7 @@ pandas>=2.2,<3
 numpy>=2.0,<3
 
 # Modelling — added for the Section 5 model-training layer
-scikit-learn>=1.4,<2   # TargetEncoder with internal cross-fitting needs >=1.3
+scikit-learn>=1.9,<2   # >=1.9: committed models/price_pipeline.pkl was built with 1.9.0; unpickling wants a matching minor
 joblib>=1.3
 
 # Explainability — src/models/explain.py (Section 5 point 4)

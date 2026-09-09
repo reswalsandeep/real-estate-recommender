@@ -4,8 +4,5 @@ __pycache__/
 .ipynb_checkpoints/
 *.egg-info/
 
-# Large regenerable model artifacts (see models/README.md)
-models/*.pkl
-
 # kept locally for reference, removed from git history (git-filter-repo, 2026-09-10)
 notebooks_original/
