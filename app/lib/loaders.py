@@ -148,7 +148,14 @@ def get_similar_projects_recommender():
 
 @st.cache_resource
 def get_listing_recommender():
-    """``ListingRecommender`` over the imputed listings table."""
+    """``ListingRecommender`` over the imputed listings table.
+
+    Reuses the already-cached price model and project recommender for its
+    enrichment columns, rather than loading its own second copies (~120 MB).
+    """
     from src.recommender.listing_recommender import ListingRecommender
 
-    return ListingRecommender.from_csv()
+    return ListingRecommender.from_csv(
+        price_model=get_price_model(),
+        project_recommender=get_similar_projects_recommender(),
+    )

@@ -52,8 +52,10 @@ Enrichment (display only)
   ``appartments.csv`` project (~49 % of rows; the Section 10 society bridge),
   ``SimilarProjectsRecommender``'s top 3. ``None`` otherwise.
 
-Both are computed for the top ``k`` only and cached; the price model and the
-project recommender load lazily on first enriched call.
+Both are computed for the top ``k`` only and cached. The price model and the
+project recommender load lazily on the first enriched call, unless the caller
+passes them in via ``price_model=`` / ``project_recommender=`` (the app does, so
+its ``@st.cache_resource`` singletons are reused rather than loaded twice).
 """
 
 from __future__ import annotations
@@ -129,7 +131,14 @@ class Preferences:
 class ListingRecommender:
     """Filter + soft-rank listings against a :class:`Preferences` vector."""
 
-    def __init__(self, listings: pd.DataFrame, model_features: pd.DataFrame):
+    def __init__(
+        self,
+        listings: pd.DataFrame,
+        model_features: pd.DataFrame,
+        *,
+        price_model=None,
+        project_recommender: "SimilarProjectsRecommender | None" = None,
+    ):
         if len(listings) != len(model_features):
             raise ValueError(
                 f"listings ({len(listings)}) and model_features ({len(model_features)}) "
@@ -139,8 +148,12 @@ class ListingRecommender:
         self._mf = model_features.reset_index(drop=True)
         self._scale = self._compute_scales()
         self._society_to_project = self._build_society_bridge()
-        self._model = None
-        self._recommender: SimilarProjectsRecommender | None = None
+        # Enrichment dependencies. When the caller already holds them (e.g. the
+        # app's @st.cache_resource singletons), pass them in so this object
+        # doesn't load a second copy of the ~200 MB pipeline or rebuild the
+        # similarity matrices. Left as None -> lazy-loaded on first enriched call.
+        self._model = price_model
+        self._recommender: SimilarProjectsRecommender | None = project_recommender
         self._sim_cache: dict[str, str] = {}
 
     @classmethod
@@ -148,8 +161,16 @@ class ListingRecommender:
         cls,
         listings_path=DEFAULT_LISTINGS_CSV,
         model_features_path=DEFAULT_MODEL_FEATURES_CSV,
+        *,
+        price_model=None,
+        project_recommender: "SimilarProjectsRecommender | None" = None,
     ) -> "ListingRecommender":
-        return cls(pd.read_csv(listings_path), pd.read_csv(model_features_path))
+        return cls(
+            pd.read_csv(listings_path),
+            pd.read_csv(model_features_path),
+            price_model=price_model,
+            project_recommender=project_recommender,
+        )
 
     # -- setup -------------------------------------------------------------- #
     def _compute_scales(self) -> dict[str, float]:
