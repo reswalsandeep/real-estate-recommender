@@ -4,8 +4,8 @@ Missing-value imputation for the Gurgaon properties pipeline.
 ``impute_missing_values()`` is ported from ``missing-value-imputation.ipynb``
 (ran and value-checked against the real
 ``gurgaon_properties_outlier_treated.csv`` -> ``gurgaon_properties_missing_value_imputation.csv``
-pair: **18/18 columns, 3554/3554 rows exact match**; see ``PROJECT_PLAN.md``
-Section 9).
+pair: **18/18 columns, 3554/3554 rows exact match**; the same check runs in
+``notebooks/06_missing_value_imputation.ipynb``).
 
 Ported faithfully -- nothing in the output changes. Notebook decisions that are
 worth knowing, documented here rather than silently kept or silently "fixed":

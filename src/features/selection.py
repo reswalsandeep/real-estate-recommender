@@ -4,8 +4,8 @@ Feature selection for the Gurgaon properties pipeline.
 ``select_features()`` is ported from ``feature-selection.ipynb`` and
 value-checked against ``gurgaon_properties_missing_value_imputation.csv`` ->
 ``gurgaon_properties_post_feature_selection.csv``: **13/13 columns,
-3554/3554 rows, 46,202/46,202 cells exact match** (see ``PROJECT_PLAN.md``
-Section 9).
+3554/3554 rows, 46,202/46,202 cells exact match**; the same check runs in
+``notebooks/11_feature_selection.ipynb``.
 
 Unlike ``outlier-treatment.ipynb`` and ``missing-value-imputation.ipynb``,
 this notebook **does** have a ``to_csv`` cell and every output column is
@@ -49,7 +49,7 @@ Weak spots, flagged rather than silently kept or fixed:
   that ``OUTPUT_COLUMNS`` still names). The parameter reads as configurable but
   only the default works. Documented-not-fixed: zero functional impact today
   (the export is correct), and not worth touching a validated module for API
-  honesty alone -- see ``PROJECT_PLAN.md`` Section 11.
+  honesty alone -- a documented wart, not a bug.
 """
 
 from __future__ import annotations

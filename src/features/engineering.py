@@ -226,7 +226,8 @@ def engineer_luxury_score(df: pd.DataFrame, appartments_df: pd.DataFrame | None 
     Build a luxury_score from the `features` amenity list, using LUXURY_WEIGHTS.
     If appartments_df (project-level data with PropertyName/TopFacilities columns)
     is provided, it's used to backfill `features` for rows where it's missing,
-    matched on society name — this is the join described in PROJECT_PLAN.md Section 0.
+    matched on society name — the `appartments.csv` amenity join
+    (see `notebooks/04_feature_engineering.ipynb`).
     """
     df = df.copy()
 

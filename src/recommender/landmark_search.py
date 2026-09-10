@@ -6,7 +6,7 @@ A **stateless lookup** over a precomputed projects x landmarks distance matrix
 distances rather than a similarity score. No fit/query lifecycle, so this is
 plain module functions, not a class.
 
-Limitations (surface these in the app UI, not just here -- ``PROJECT_PLAN.md`` Section 12):
+Limitations (surface these in the app UI, not just here -- see ``docs/recommender_methodology.md``):
 
 * Results are **"projects whose listing mentions this landmark within the
   radius"**, not a true geospatial nearest -- there are no project coordinates in

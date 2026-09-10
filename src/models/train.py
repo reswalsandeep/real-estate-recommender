@@ -1,4 +1,4 @@
-"""Train and export the Gurgaon flat/house price model (``PROJECT_PLAN.md`` Section 5).
+"""Train and export the Gurgaon flat/house price model (``PROJECT_PLAN.md``, the *Modelling* section).
 
 What was wrong in the original ``model-selection.ipynb``
 ------------------------------------------------------
@@ -444,7 +444,7 @@ if __name__ == "__main__":
     import argparse
     import pprint
 
-    p = argparse.ArgumentParser(description="Train and export the price model (PROJECT_PLAN.md Section 5).")
+    p = argparse.ArgumentParser(description="Train and export the price model (see docs/model_documentation.md).")
     p.add_argument("--data", default=str(DEFAULT_DATA))
     p.add_argument("--model-out", default=str(DEFAULT_MODEL_OUT))
     p.add_argument("--metrics-out", default=str(DEFAULT_METRICS_OUT))

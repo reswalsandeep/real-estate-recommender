@@ -4,8 +4,8 @@ Outlier treatment for the Gurgaon properties pipeline.
 ``treat_outliers()`` is reconstructed from ``outlier-treatment.ipynb`` and
 value-checked against the real ``gurgaon_properties_cleaned_v2.csv`` ->
 ``gurgaon_properties_outlier_treated.csv`` pair: **24/24 columns,
-3555/3555 rows, 85,320/85,320 cells exact match** (see ``PROJECT_PLAN.md``
-Section 9).
+3555/3555 rows, 85,320/85,320 cells exact match**; the same check runs in
+``notebooks/05_outlier_treatment.ipynb``.
 
 **The uploaded notebook does NOT fully produce its output.** Three
 transformations present in the output have no code in the notebook and were

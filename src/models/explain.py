@@ -1,4 +1,4 @@
-"""Explainability for the exported price model (``PROJECT_PLAN.md`` Section 5, point 4).
+"""Explainability for the exported price model (``PROJECT_PLAN.md``, the *Modelling* section).
 
 The shipped pipeline (``models/price_pipeline.pkl``) is a
 ``RandomForestRegressor`` on top of a ``ColumnTransformer``, trained on
