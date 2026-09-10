@@ -1,27 +1,14 @@
-"""Train and export the Gurgaon flat/house price model (``PROJECT_PLAN.md``, the *Modelling* section).
+"""Train and export the Gurgaon flat/house price model.
 
-What was wrong in the original ``model-selection.ipynb``
-------------------------------------------------------
-It ran a ``GridSearchCV`` that reported ``best_score_ = 0.9027`` R2 with
-``max_depth=20, max_features='sqrt', max_samples=1.0, n_estimators=300`` and a
-``TargetEncoder`` on ``sector`` -- then pickled a *different*, hand-rebuilt
-pipeline (``n_estimators=500``, no ``max_depth`` / ``max_features`` /
-``max_samples``, ``OneHotEncoder`` on ``sector``) fit on **all** of ``X`` with
-no held-out evaluation. The 0.90 number was never validated for the shipped
-model.
+One preprocessing scheme (build_preprocessor) used in both the search and the
+export. The search runs on the train split only; search.best_estimator_ is
+exported verbatim, then scored on the held-out test split. CV R2 and test
+metrics are written out separately labelled.
 
-What this module does instead
------------------------------
-* ONE preprocessing scheme (:func:`build_preprocessor`), used identically in
-  the search and in whatever gets exported.
-* The search is fit on a **train split only**; the test split never enters it.
-* We export ``search.best_estimator_`` **verbatim** -- no second pipeline, no
-  changed hyper-parameters.
-* That exact object is then scored on the locked-away test split, and both
-  numbers (CV R2 vs. test metrics) are written out, separately labelled.
+The original model-selection.ipynb validated one GridSearchCV config and pickled
+a different one with no held-out score - see docs/model_documentation.md.
 
-Target is ``log1p(price)`` (crore); predictions are ``expm1``'d back for MAE /
-RMSE. ``random_state=42`` everywhere.
+Target is log1p(price) (crore); random_state=42 everywhere.
 """
 
 from __future__ import annotations
@@ -67,9 +54,8 @@ NUMERIC_COLS = ["bedRoom", "bathroom", "built_up_area", "servant room", "store r
 HIGH_CARD_COL = "sector"  # 104 categories in this data -> target-encode
 NOMINAL_COLS = ["property_type"]  # binary (flat / house)
 
-# Explicit, semantically ordered categories for the ordinal block. The original
-# notebook used a bare ``OrdinalEncoder`` here (lexical order, e.g. High < Low <
-# Medium) -- these orderings are a deliberate improvement, documented in the log.
+# explicit semantic order for the ordinal block (the notebook used a bare
+# OrdinalEncoder = lexical order)
 ORDINAL_SPEC: dict[str, list] = {
     "balcony": ["0", "1", "2", "3", "3+"],
     "agePossession": [
@@ -87,8 +73,7 @@ ORDINAL_COLS = list(ORDINAL_SPEC)
 
 FEATURE_COLS = NUMERIC_COLS + [HIGH_CARD_COL] + ORDINAL_COLS + NOMINAL_COLS
 
-# RandomizedSearchCV samples from this. Same grid the original GridSearchCV
-# intended, with the now-invalid ``max_features='auto'`` dropped.
+# RandomizedSearchCV grid; the original's max_features 'auto' (removed in sklearn 1.3) -> 1.0
 PARAM_DISTRIBUTIONS: dict[str, list] = {
     "regressor__n_estimators": [100, 200, 300, 500],
     "regressor__max_depth": [None, 10, 20, 30],
@@ -163,13 +148,8 @@ def split_dataset(
     y_log: pd.Series,
     test_size: float = 0.2,
 ) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
-    """The one train/test split, so every consumer gets the identical hold-out.
-
-    Thin wrapper over ``train_test_split`` pinned to ``random_state=RANDOM_STATE``.
-    Used by :func:`train_and_export` and by ``src/models/explain.py`` (so its
-    global SHAP summary is computed on exactly the rows the shipped model was
-    fit on).
-    """
+    """The one train/test split, so train_and_export and explain.py score on
+    the identical hold-out. random_state=RANDOM_STATE."""
     return train_test_split(X, y_log, test_size=test_size, random_state=RANDOM_STATE)
 
 

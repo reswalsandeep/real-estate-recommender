@@ -1,65 +1,23 @@
-"""Preference-based listing recommender.
+"""Preference-based listing recommender. Full design:
+reports/recommender/listing_recommender_design.md.
 
-``PROJECT_PLAN.md`` (the *Recommenders* section) for scope;
-``reports/recommender/listing_recommender_design.md`` for the full design.
+Hard filters (budget_max_cr, min_bedrooms, sector, property_type, applied only
+when set), then the survivors are ranked by weighted closeness on the soft
+axes the user gave a value for:
 
-Third of the app's recommender features. Takes a **preference vector** (no
-seed-listing mode -- that is `SimilarProjectsRecommender` at the project level),
-applies **hard filters**, then ranks the survivors by **weighted closeness** on
-the soft axes the user actually specified. The price model and project-similarity
-are attached to each result as **display columns only** -- never folded into the
-ranking score.
+    d_a(c)   = |p_a - value_a(c)| / scale_a
+    score(c) = sum(w_a * d_a) / sum(w_a)      over the active axes, ascending
 
-Ranking method
---------------
-For a candidate ``c`` and preference ``p``, over the set ``S`` of soft axes where
-``p`` gave a value::
+scale_a is the IQR (built_up_area, luxury_score) or std (bathroom, furnishing,
+agePossession) over the full listings table. No soft axis given -> match_score
+is NaN and results are ordered by price. No candidates -> empty DataFrame with
+the normal columns.
 
-    d_a(c)   = |p_a - value_a(c)| / scale_a          for each a in S
-    score(c) = ( Σ_{a in S} w_a * d_a(c) ) / ( Σ_{a in S} w_a )
-
-    scale_a = IQR (built_up_area, luxury_score)  |  std (bathroom, furnishing
-              code 0/1/2, agePossession ordinal 0-4), each over the FULL listings
-              table -- so score means "how many typical spreads from what you
-              asked for", stable across queries.
-    w_a     = fixed SOFT_WEIGHTS[a], renormalised over the active axes.
-
-Ranked ascending; ties broken by ``price`` ascending. If **no** soft axis is
-given, ``match_score`` is ``NaN`` and results are ordered by ``price`` ascending.
-
-Hard filters: ``budget_max_cr`` (price ceiling), ``min_bedrooms``, ``sector``,
-``property_type`` -- each applied only when set. No candidates after filtering ->
-an empty DataFrame with the normal columns.
-
-Deliberate scope choices (v1) -- written down so they are not later mistaken for gaps
-----------------------------------------------------------------------------------
-* **``luxury_score`` carries a high soft weight (0.25)** even though
-  ``reports/model/explainability_summary.md`` found ``luxury_category`` contributes
-  almost nothing to *actual price*. Preference-weight (how much a buyer cares
-  about a luxury level when choosing) and price-importance (how much it moves the
-  model's price) are treated here as **separate questions** -- this is intentional,
-  not an unreconciled inconsistency between the two pieces of work.
-* **``sector`` is a hard filter only, never a soft-ranking axis**, despite being
-  the #2 price driver in the explainability summary. A buyer either fixes a
-  sector or leaves it open; "somewhat near the preferred sector" needs adjacency
-  data we do not have. Deliberate v1 simplification.
-
-Enrichment (display only)
--------------------------
-* ``price_vs_model_pct`` -- ``100 * (actual_price / price_pipeline.pkl prediction
-  - 1)``; negative = priced **below** the model. Uses the row-aligned
-  ``post_feature_selection_v2`` table (it carries ``luxury_category`` /
-  ``floor_category`` that the listings table lacks; rows are position-aligned so
-  no re-binning).
-* ``similar_projects`` -- for listings whose ``society`` exact-matches an
-  ``appartments.csv`` project (~49 % of rows; the society bridge -- see
-  ``reports/recommender/listing_recommender_design.md``),
-  ``SimilarProjectsRecommender``'s top 3. ``None`` otherwise.
-
-Both are computed for the top ``k`` only and cached. The price model and the
-project recommender load lazily on the first enriched call, unless the caller
-passes them in via ``price_model=`` / ``project_recommender=`` (the app does, so
-its ``@st.cache_resource`` singletons are reused rather than loaded twice).
+The price-model estimate and a similar-projects list are display columns only,
+never in the score. Two v1 scope choices: luxury_score keeps a high soft weight
+(0.25) even though it barely moves the model price - preference-weight and
+price-importance are separate questions; sector is a hard filter only, never a
+soft axis (no adjacency data).
 """
 
 from __future__ import annotations
@@ -152,10 +110,8 @@ class ListingRecommender:
         self._mf = model_features.reset_index(drop=True)
         self._scale = self._compute_scales()
         self._society_to_project = self._build_society_bridge()
-        # Enrichment dependencies. When the caller already holds them (e.g. the
-        # app's @st.cache_resource singletons), pass them in so this object
-        # doesn't load a second copy of the ~200 MB pipeline or rebuild the
-        # similarity matrices. Left as None -> lazy-loaded on first enriched call.
+        # pass these in (the app's cached singletons) to avoid a second ~200 MB
+        # pipeline; None -> lazy-loaded on the first enriched call
         self._model = price_model
         self._recommender: SimilarProjectsRecommender | None = project_recommender
         self._sim_cache: dict[str, str] = {}

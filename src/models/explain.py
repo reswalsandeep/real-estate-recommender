@@ -1,25 +1,14 @@
-"""Explainability for the exported price model (``PROJECT_PLAN.md``, the *Modelling* section).
+"""Explainability for the exported price model.
 
-The shipped pipeline (``models/price_pipeline.pkl``) is a
-``RandomForestRegressor`` on top of a ``ColumnTransformer``, trained on
-``log1p(price)``. **Nothing here refits it** -- ``shap.TreeExplainer`` reads the
-fitted trees directly, and the training split for the global summary comes from
-:func:`src.models.train.split_dataset` (same ``test_size`` / ``random_state`` as
-training), so the summary is computed on exactly the rows the model saw.
+Nothing here refits it - shap.TreeExplainer reads the fitted trees, and the
+global summary runs on the same training split (train.split_dataset). Global
+importance is impurity feature_importances_ plus mean |SHAP|; per-prediction is
+SHAP TreeExplainer. The linear-coefficient method isn't ported - it assumes a
+linear model.
 
-The insights notebook's standardised-linear-coefficient method is deliberately
-**not** ported: it assumes a linear model and is meaningless for a forest. Global
-importance here is ``feature_importances_`` (impurity) plus mean ``|SHAP|``;
-per-prediction explanation is SHAP ``TreeExplainer``.
-
-SHAP units
-----------
-SHAP values are in the model's output space, ``log1p(price)``. They are additive
-*there* (``sum(shap) + base_value == model log-output``), and
-``expm1(model log-output)`` is the crore prediction. They do **not** pass through
-``expm1`` linearly, so this module reports per-feature contributions in log units
-and the crore price separately. Sign and rank carry over to price; the
-magnitudes are log-space.
+SHAP values are in log1p(price) space and additive there (sum(shap) + base ==
+model log-output). Sign and rank carry over to the crore price; magnitudes
+don't. Per-feature contributions are reported in log units, the price in crore.
 """
 
 from __future__ import annotations
@@ -236,29 +225,24 @@ def _render_md(r: dict) -> str:
     return "\n".join(lines)
 
 
-# Static: findings from manual review of specific rows (do not depend on a run).
+# findings from manual review of specific rows (do not depend on a run)
 _MANUAL_CHECKS = """## Data-quality checks (manual)
 
-**Row 33 — replaced in the demo (checked during review).** An earlier draft used
-row 33 (`society` "greenopolis", sector 89, Rs 0.70 Cr, 1297 sqft, 2 BHK) as the
-sub-Rs 1 Cr example; its predicted Rs 1.10 Cr missed by Rs 0.40 Cr, about 2.4x
-the 0-1 Cr band's average MAE. Tracing it to source:
+**Row 33 — replaced in the demo.** An earlier draft used row 33 ("greenopolis",
+sector 89, Rs 0.70 Cr, 1297 sqft, 2 BHK) as the sub-Rs 1 Cr example; its predicted
+Rs 1.10 Cr missed by Rs 0.40 Cr, ~2.4x the 0-1 Cr band MAE.
 
-- The **price is internally consistent and plausible if low** --
-  Rs 0.70 Cr / 1297 sqft = Rs 5,397/sqft, matching the stored `price_per_sqft`;
-  no lakh/crore or area-unit parsing error. A bare 2 BHK resale in Greenopolis
-  (a delayed-delivery project) can sit around this figure.
-- But the row is **mislabelled `property_type = "house"`** while being a
-  **14th-floor unit** (`floorNum = 14`) in Greenopolis, a high-rise apartment
-  complex. SHAP shows `property_type = house` adding +0.115 log (~+12 %) to the
-  prediction -- a spurious independent-house premium applied to a flat, which
-  accounts for most of the miss. `agePossession` was also imputed
-  ("Undefined" -> "New Property").
+- The price is internally consistent (Rs 0.70 Cr / 1297 sqft = Rs 5,397/sqft,
+  matches the stored price_per_sqft; no parsing error).
+- But the row is mislabelled `property_type = "house"` while being a 14th-floor
+  unit in Greenopolis, a high-rise. SHAP shows `property_type = house` adds
+  +0.115 log (~+12 %) - a spurious independent-house premium on a flat, which is
+  most of the miss. `agePossession` was also imputed ("Undefined" -> "New Property").
 
 Replaced by row 2757 (Shree Vardhman Flora, sector 90, 2 BHK flat, Rs 0.70 Cr ->
-predicted Rs 0.84 Cr, a typical band miss). **Flag for the cleaning rebuild:**
-high-floor rows in apartment-society projects labelled `property_type = "house"`
-corrupt the feature vector, not just the prediction, and should be relabelled.
+Rs 0.84 Cr, a typical miss). High-floor rows in apartment projects labelled
+`property_type = "house"` corrupt the feature vector and should be relabelled in
+the cleaning stage.
 """
 
 

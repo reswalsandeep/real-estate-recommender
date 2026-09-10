@@ -1,62 +1,25 @@
-"""Three similarity matrices for Gurgaon apartment projects, and their blend.
+"""Three cosine-similarity matrices for Gurgaon apartment projects, and their blend.
 
-Ported from ``notebooks_original/recommender-system.ipynb``, which built three
-cosine-similarity matrices and then left several contradictory weighted sums
-in the notebook with no conclusion (``30*sim1 + 20*sim2 + 8*sim3`` in one
-cell, ``6*sim1 + 5*sim2 + 3*sim3`` in another). This module resolves that.
+- facilities: TF-IDF (1-2 grams) over the TopFacilities list.
+- structural: PriceDetails parsed to per-BHK area / price / building_type,
+  one-hot + fillna(0) + StandardScaler.
+- location: LocationAdvantages distances to ~1070 named landmarks, missing filled
+  with a 54000 m sentinel, StandardScaler.
 
-The three axes
---------------
-``facilities`` (was ``cosine_sim1``)
-    TF-IDF (1-2 grams) over the ``TopFacilities`` list joined to a string,
-    then cosine. "Do these two projects advertise similar amenities."
-``structural`` (was ``cosine_sim2``)
-    ``PriceDetails`` JSON parsed into per-BHK ``area low/high``,
-    ``price low/high`` and ``building_type``; one-hot + ``fillna(0)`` +
-    ``StandardScaler``; then cosine. "Do these two projects offer similar
-    unit configurations, sizes and price bands."
-``location`` (was ``cosine_sim3``)
-    ``LocationAdvantages`` parsed into distance-to-landmark in metres
-    (~1070 landmark columns), missing filled with a 54 000 m sentinel,
-    ``StandardScaler``; then cosine. "Are these two projects near the same
-    named landmarks."
-
-Why the raw matrices must be normalised before blending
-------------------------------------------------------
-Cosine similarity is bounded, but the three matrices are **not on comparable
-scales** (off-diagonal, 246x246, measured on the real data):
+The three matrices are not on comparable scales (off-diagonal, 246x246, real data):
 
     axis         range          mean +/- std     % negative   top-5 nbr band
     facilities   [ 0.00, 0.68]  0.072 +/- 0.082      0 %          0.365
     structural   [-0.77, 1.00]  0.033 +/- 0.341     55 %          0.855
     location     [-0.10, 1.00]  0.023 +/- 0.177     79 %          0.282
 
-``structural`` has ~4x the spread of ``facilities`` and ~2x ``location``, so in
-an unweighted sum it dominates the ranking purely by variance. ``facilities``
-is non-negative while the other two swing both ways, so a naive sum lets a
-strong amenity match be cancelled by a structural mismatch. The original
-notebook's ``30/20/8`` *looks* like it prioritises text, but weight x std works
-out to structure-first anyway -- the stated weights never matched the
-behaviour.
+structural has ~4x the spread of facilities, so an unweighted sum is
+structure-dominated by variance alone. minmax_offdiag min-maxes each matrix onto
+[0, 1] on its off-diagonal so the weights are real priorities.
 
-Fix: min-max each matrix onto [0, 1] on its off-diagonal values
-(:func:`minmax_offdiag`), so every component is a non-negative "how similar on
-this axis" score and the weights are real priorities.
-
-The weights
------------
-:data:`DEFAULT_WEIGHTS` = ``structural 0.50 / location 0.30 / facilities 0.20``.
-
-* **structural 0.50** -- what a buyer is actually shopping for (size, config,
-  price band); also the axis with the strongest discriminating power here.
-* **location 0.30** -- conceptually the #1 price driver, docked only for data
-  quality: the landmark signal is 99.2 % sparse and near-binary in this file.
-  Raise it once a denser location match (e.g. sector) is available.
-* **facilities 0.20** -- real but secondary, a tie-breaker, and partly
-  double-counted with price tier (pricier projects list more amenities).
-
-Full derivation, the sensitivity check, and known limitations:
-``reports/recommender/blend_weights.md``.
+DEFAULT_WEIGHTS = structural 0.50 / location 0.30 / facilities 0.20. location is
+docked from a higher weight because the landmark signal is 99.2% sparse and
+near-binary. Full derivation: reports/recommender/blend_weights.md.
 """
 
 from __future__ import annotations

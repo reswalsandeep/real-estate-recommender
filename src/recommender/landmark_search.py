@@ -1,23 +1,17 @@
-"""Landmark-proximity search: "pick a landmark, get every project within X km".
+"""Landmark-proximity search: pick a landmark, get every project within X km.
 
-A **stateless lookup** over a precomputed projects x landmarks distance matrix
-(metres) built from the same ``LocationAdvantages`` data that feeds
-``cosine_sim3`` in :mod:`src.recommender.similarity` -- here reshaped into raw
-distances rather than a similarity score. No fit/query lifecycle, so this is
-plain module functions, not a class.
+A stateless lookup over a precomputed projects x landmarks distance matrix
+(metres), from the same LocationAdvantages data as similarity.py's location axis.
 
-Limitations (surface these in the app UI, not just here -- see ``docs/recommender_methodology.md``):
+Limitations - surface these in the app UI:
 
-* Results are **"projects whose listing mentions this landmark within the
-  radius"**, not a true geospatial nearest -- there are no project coordinates in
-  ``appartments.csv``, so a project that simply didn't list a landmark is absent
-  from that landmark's results even if it is physically close.
-* Landmark names are fragmented in the source (``"IGI Airport"`` /
-  ``"Indira Gandhi Intl Airport"`` / ``"Indira Gandhi International Airport"`` are
-  one place). :data:`_LANDMARK_ALIASES` folds the handful of high-traffic
-  offenders; the long tail is not resolved.
-* ~184 distance strings are time (``'10 mins'``) or vague text
-  (``'Close Proximity'``) and carry no distance -- those cells are absent.
+* Results are "projects whose listing mentions this landmark within the radius",
+  not a true geospatial nearest - there are no project coordinates, so a project
+  that didn't list a landmark is absent even if it is physically close.
+* Landmark names are fragmented ("IGI Airport" / "Indira Gandhi Intl Airport" /
+  "Indira Gandhi International Airport"). _LANDMARK_ALIASES folds the common ones.
+* ~184 distance strings are time ("10 mins") or vague ("Close Proximity") and
+  carry no distance.
 """
 
 from __future__ import annotations
