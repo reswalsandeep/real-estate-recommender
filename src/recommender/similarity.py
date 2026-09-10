@@ -19,7 +19,7 @@ structure-dominated by variance alone. minmax_offdiag min-maxes each matrix onto
 
 DEFAULT_WEIGHTS = structural 0.50 / location 0.30 / facilities 0.20. location is
 docked from a higher weight because the landmark signal is 99.2% sparse and
-near-binary. Full derivation: reports/recommender/blend_weights.md.
+near-binary.
 """
 
 from __future__ import annotations

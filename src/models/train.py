@@ -6,7 +6,7 @@ exported verbatim, then scored on the held-out test split. CV R2 and test
 metrics are written out separately labelled.
 
 The original model-selection.ipynb validated one GridSearchCV config and pickled
-a different one with no held-out score - see docs/model_documentation.md.
+a different one with no held-out score.
 
 Target is log1p(price) (crore); random_state=42 everywhere.
 """
@@ -424,7 +424,7 @@ if __name__ == "__main__":
     import argparse
     import pprint
 
-    p = argparse.ArgumentParser(description="Train and export the price model (see docs/model_documentation.md).")
+    p = argparse.ArgumentParser(description="Train and export the price model.")
     p.add_argument("--data", default=str(DEFAULT_DATA))
     p.add_argument("--model-out", default=str(DEFAULT_MODEL_OUT))
     p.add_argument("--metrics-out", default=str(DEFAULT_METRICS_OUT))

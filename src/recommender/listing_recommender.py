@@ -1,5 +1,4 @@
-"""Preference-based listing recommender. Full design:
-reports/recommender/listing_recommender_design.md.
+"""Preference-based listing recommender.
 
 Hard filters (budget_max_cr, min_bedrooms, sector, property_type, applied only
 when set), then the survivors are ranked by weighted closeness on the soft

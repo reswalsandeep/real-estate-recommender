@@ -1,7 +1,6 @@
 """Model training, evaluation, and inference for the Gurgaon price predictor.
 
-See ``PROJECT_PLAN.md`` (the *Modelling* section) and ``docs/model_documentation.md``
-for why this layer exists: the original ``model-selection.ipynb`` exported a
+This layer exists because the original ``model-selection.ipynb`` exported a
 pipeline that did not match the configuration it validated.
 
 Import from the submodules directly, e.g.::

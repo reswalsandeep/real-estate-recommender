@@ -29,7 +29,7 @@ def load_json(rel_path: str) -> dict:
 
 @st.cache_data
 def load_text(rel_path: str) -> str:
-    """Read a text/Markdown artifact (e.g. ``reports/model/model_selection_log.md``)."""
+    """Read a text artifact by repo-relative path."""
     return (REPO_ROOT / rel_path).read_text(encoding="utf-8")
 
 
