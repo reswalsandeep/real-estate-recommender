@@ -10,3 +10,7 @@ notebooks_original/
 
 # sidecar outputs from the 16-notebook rebuild; committed data/interim/*.csv stay canonical
 data/interim/_rebuild/
+
+# all markdown docs are kept locally for reference only, removed from git history
+# (git-filter-repo, 2026-09-10) - the .md files live on disk, not in the repo
+*.md
