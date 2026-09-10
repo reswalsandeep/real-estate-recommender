@@ -219,7 +219,6 @@ def _render_md(r: dict) -> str:
         f"RF impurity rank: {' > '.join(f'`{f}`' for f in r['rf_impurity_rank'])}",
         "",
         _MANUAL_CHECKS,
-        "Feeds `docs/model_documentation.md` (not yet written).",
         "",
     ]
     return "\n".join(lines)
