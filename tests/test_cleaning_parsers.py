@@ -1,7 +1,7 @@
 """Price and floor-number parsers in src/preprocessing/cleaning.py.
 
 Cases are the ones established while validating the module (see the module
-docstring and notebooks/02_data_cleaning.ipynb) — notably the basement
+docstring and notebooks/01_data_preprocessing_flats.ipynb) — notably the basement
 sign-fix: `_parse_floor_num` must keep `Basement -> -1`, not the original
 notebook's `-> 1`.
 """

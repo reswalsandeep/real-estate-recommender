@@ -17,7 +17,7 @@ plotly>=5.24,<6   # scatter_mapbox (dropped in Plotly 7) is the only OSM map tha
 streamlit>=1.40   # st.navigation / st.Page need >=1.36
 wordcloud>=1.9    # amenities word cloud on the Market Insights page
 
-# Notebook execution for notebooks/08_model_training.ipynb
+# Notebook execution for the notebooks/ rebuild (all 16 numbered notebooks)
 jupyter>=1.0
 nbconvert>=7
 ipykernel>=6

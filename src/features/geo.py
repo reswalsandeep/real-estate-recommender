@@ -185,9 +185,9 @@ def build_sector_map(
     Jupyter (a plain browser). So it is a Jupyter inline-renderer bug with
     MapLibre-based figures, not a bug in ``scatter_map`` or in this function.
 
-    Consequence: ``notebooks/05_eda.ipynb`` embeds :func:`build_sector_map_static`
-    (matplotlib) as its committed output, not this figure. Keep using
-    ``scatter_map`` here (current, non-deprecated).
+    Consequence: ``notebooks/09_data_visualization.ipynb`` embeds
+    :func:`build_sector_map_static` (matplotlib) as its committed output, not this
+    figure. Keep using ``scatter_map`` here (current, non-deprecated).
 
     **TODO when the Streamlit app exists:** confirm this figure renders correctly
     *in Streamlit* directly -- Streamlit embeds Plotly differently from a Jupyter

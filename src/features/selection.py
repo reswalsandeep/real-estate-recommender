@@ -14,7 +14,7 @@ notebook (cells 22-49: correlation / RF / GB / permutation / LASSO / RFE /
 linear weights / SHAP, plus a CV comparison) are **analysis only** -- they
 inform the human choice to drop ``pooja room`` / ``study room`` / ``others``
 but touch nothing in the export, so they are not ported here; they belong in
-``07_feature_selection.ipynb``.
+``11_feature_selection.ipynb``.
 
 One trivial gap: the six ordinal-encoded columns are ``int64`` in the
 committed CSV, but ``OrdinalEncoder`` returns ``float64`` and no cell casts
@@ -36,7 +36,7 @@ Weak spots, flagged rather than silently kept or fixed:
   ``sector`` code 0 = ``"dwarka expressway"``, ``agePossession`` 0 =
   ``"Moderately Old"`` (not age order). The downstream model then treats these
   as ordered ints. This is the smell the untraced ``_v2`` file addresses;
-  ``08_model_training.ipynb`` re-encodes properly in its ``ColumnTransformer``,
+  ``14_model_selection.ipynb`` re-encodes properly in its ``ColumnTransformer``,
   so the export's encoding is a historical artifact. Reproduced as-is.
 - **Encoder fit on the full frame**, before any train/test split (cell 19).
 - **``price_per_sqft`` dropped here** (cell 5) is the stale one from the

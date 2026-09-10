@@ -15,8 +15,8 @@ Constraints, learned the hard way:
 - The figure ``height`` is honoured; ``width`` is overridden to the container.
 
 ``src.features.geo.build_sector_map_static`` (matplotlib) is kept as a documented
-fallback and is what ``notebooks/05_eda.ipynb`` embeds, but it is no longer
-rendered on this page.
+fallback and is what ``notebooks/09_data_visualization.ipynb`` embeds, but it is
+no longer rendered on this page.
 """
 
 from __future__ import annotations
