@@ -15,7 +15,7 @@ Constraints, learned the hard way:
 - The figure ``height`` is honoured; ``width`` is overridden to the container.
 
 ``src.features.geo.build_sector_map_static`` (matplotlib) is kept as a documented
-fallback and is what ``notebooks/09_data_visualization.ipynb`` embeds, but it is
+fallback and is what ``notebooks/19_sector_price_map.ipynb`` embeds, but it is
 no longer rendered on this page.
 """
 
