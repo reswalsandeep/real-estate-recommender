@@ -1,18 +1,9 @@
-"""
-Feature engineering for the Gurgaon properties pipeline.
+"""Feature engineering: area columns from areaWithType, additional-room flags,
+agePossession buckets, a KMeans furnishing_type, a weighted luxury_score.
 
-Ported from feature-engineering.ipynb, ran against gurgaon_properties_cleaned_v1.csv
-in the original project. Two changes from the notebook version, both noted inline:
-
-1. `_drop_temp_furnishing_columns` drops by column name instead of the notebook's
-   `df.iloc[:, :-18]`. The notebook's version assumes exactly 18 unique furnishing
-   items are found in the data being processed; on a fresh scrape with even one
-   different amenity name, that positional slice silently drops the wrong columns.
-2. `_label_furnishing_clusters` orders the KMeans cluster labels by mean furnishing
-   count instead of trusting them to come out as 0=unfurnished/1=semi/2=furnished.
-   KMeans doesn't guarantee cluster index order; the notebook's mapping was correct
-   for that one run but isn't guaranteed to hold if the input data, sklearn version,
-   or furnishing vocabulary changes.
+Two changes from the notebook: drop the temp furnishing columns by name, not
+df.iloc[:, :-18] (which assumes exactly 18); and order the KMeans cluster labels
+by mean furnishing count rather than trusting them to come out 0/1/2.
 """
 
 from __future__ import annotations
@@ -28,9 +19,7 @@ from sklearn.preprocessing import MultiLabelBinarizer, StandardScaler
 
 logger = logging.getLogger(__name__)
 
-# Perceived luxury contribution per amenity, as used in the original pipeline.
-# Verbatim from feature-engineering.ipynb — this is curated domain judgment,
-# not something to regenerate from scratch.
+# per-amenity luxury weights, verbatim from the notebook (curated judgment)
 LUXURY_WEIGHTS: dict[str, int] = {
     '24/7 Power Backup': 8, '24/7 Water Supply': 4, '24x7 Security': 7, 'ATM': 4,
     'Aerobics Centre': 6, 'Airy Rooms': 8, 'Amphitheatre': 7, 'Badminton Court': 7,
@@ -124,8 +113,7 @@ def engineer_area_columns(df: pd.DataFrame) -> pd.DataFrame:
         lambda x: convert_to_sqft(x['areaWithType'], x['carpet_area']), axis=1
     )
 
-    # Rows where none of the three area types were found (typically plots): fall
-    # back to plot area, then fix the unit scale if it implies sq.yard/sq.m.
+    # no area type found (typically plots): fall back to plot area + unit-scale fix
     all_null = df[
         df['super_built_up_area'].isnull()
         & df['built_up_area'].isnull()
@@ -216,7 +204,7 @@ def engineer_furnishing_type(df: pd.DataFrame) -> pd.DataFrame:
     scaled = StandardScaler().fit_transform(raw_counts)
     df['furnishing_type'] = _label_furnishing_clusters(scaled, raw_counts)
 
-    # Drop the temporary per-item columns by NAME (see module docstring, point 1).
+    # drop the temp per-item columns by name
     df = df.drop(columns=columns_to_include)
     return df
 

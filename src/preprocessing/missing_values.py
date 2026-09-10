@@ -1,39 +1,12 @@
-"""
-Missing-value imputation for the Gurgaon properties pipeline.
+"""Missing-value imputation. Fills built_up_area from the super-built-up /
+carpet ratios (~1.105, ~0.9), overrides small-area high-price anomalies with the
+raw area, constant-fills floorNum (2.0), drops the one null-society row, then
+fills the 'Undefined' agePossession sentinel by a 3-stage group-mode cascade.
 
-``impute_missing_values()`` is ported from ``missing-value-imputation.ipynb``
-(ran and value-checked against the real
-``gurgaon_properties_outlier_treated.csv`` -> ``gurgaon_properties_missing_value_imputation.csv``
-pair: **18/18 columns, 3554/3554 rows exact match**; the same check runs in
-``notebooks/06_missing_value_imputation.ipynb``).
-
-Ported faithfully -- nothing in the output changes. Notebook decisions that are
-worth knowing, documented here rather than silently kept or silently "fixed":
-
-- **floorNum flat fill.** The notebook fills every null ``floorNum`` with a
-  constant ``2.0``, ignoring ``property_type`` (a house floor is typically
-  0-1). Only 17 rows (0.48 %). Kept as the default; exposed as
-  ``floornum_fill=`` so a caller can override without editing this module.
-- **The single null-`society` row is dropped, not imputed.** The notebook does
-  it by hardcoded ``df.drop(index=[2536])``; that is the only row with a null
-  ``society``. Ported here as a content-based "drop rows where ``society`` is
-  null" so it survives row reordering -- the same move ``clean_flats`` makes
-  for its embedded-header row.
-- **built_up_area anomaly override.** After the ratio-based fills, rows with
-  ``built_up_area < 2000`` and ``price > 2.5`` Cr get
-  ``built_up_area = area`` (the raw column, which is dropped immediately
-  after). A blunt heuristic: it fixes genuine garbage (300 sqft at 8 Cr) but
-  also shifts some borderline rows where ``built_up_area`` looked plausible.
-  Kept -- it is load-bearing for the exact match and nets out positive.
-- **price_per_sqft is not recomputed** after ``built_up_area`` is imputed /
-  overridden, so it goes stale for those rows. The notebook leaves it; so does
-  the real output CSV; so do we. Re-deriving it is not this stage's job.
-- **Ratio literals.** ``SUPER_TO_BUILTUP_RATIO`` / ``CARPET_TO_BUILTUP_RATIO``
-  are the medians of ``super_built_up_area / built_up_area`` and
-  ``carpet_area / built_up_area`` over the rows with all three areas present
-  (1.10526 and 0.9). The notebook computes them, prints them, then hardcodes
-  ``1.105`` / ``0.9``. Kept as literals -- ``round()`` absorbs the
-  1.105-vs-1.10526 gap (verified: still an exact match).
+floorNum is filled with a flat 2.0 regardless of property_type (17 rows); exposed
+as floornum_fill=. The null-society row is dropped by content, not the notebook's
+hardcoded df.drop(index=[2536]). price_per_sqft is left stale after built_up_area
+changes, matching the notebook and the committed CSV.
 """
 
 from __future__ import annotations
@@ -45,8 +18,7 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-# medians over rows with super_built_up_area, built_up_area and carpet_area all
-# present; the notebook hardcodes these rounded values.
+# medians the notebook computes then hardcodes, rounded
 SUPER_TO_BUILTUP_RATIO = 1.105
 CARPET_TO_BUILTUP_RATIO = 0.9
 

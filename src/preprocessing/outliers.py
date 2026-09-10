@@ -1,48 +1,12 @@
-"""
-Outlier treatment for the Gurgaon properties pipeline.
+"""Outlier treatment: drop duplicates and extreme rows, rescale square-yard
+areas, recompute price_per_sqft.
 
-``treat_outliers()`` is reconstructed from ``outlier-treatment.ipynb`` and
-value-checked against the real ``gurgaon_properties_cleaned_v2.csv`` ->
-``gurgaon_properties_outlier_treated.csv`` pair: **24/24 columns,
-3555/3555 rows, 85,320/85,320 cells exact match**; the same check runs in
-``notebooks/05_outlier_treatment.ipynb``.
-
-**The uploaded notebook does NOT fully produce its output.** Three
-transformations present in the output have no code in the notebook and were
-recovered from the input->output diff:
-
-1. the ``area_room_ratio`` column (``area / bedRoom``) -- no cell creates it;
-2. a drop of 33 hand-picked low ``area / bedRoom`` rows (garbage listings such
-   as a 145 sqft "2 BHK") -- a subset of the ``area / bedRoom < 183`` rows, but
-   not reproducible by any threshold;
-3. a downward correction of ``bedRoom`` on 70 ``property_type == 'house'`` rows
-   (from 4-10 down to 1-4). Not reproducible by any formula, and **not** a join
-   to ``houses.csv`` / ``independent-house.csv`` -- those carry the same
-   inflated counts (checked: raw ``bedRoom`` matches the *original* value 56/57
-   times, the corrected value 0/57).
-
-Items 2 and 3, plus the notebook's own hand-typed index edits (cells 33/35/67),
-are quarantined below as ``_RECONSTRUCTED_*`` / ``_MANUAL_*`` constant tables.
-**They are replay-only**: every key is a positional row index into
-``gurgaon_properties_cleaned_v2.csv`` (labels survive ``drop_duplicates`` and
-are kept until the final ``reset_index``). If that file's row order ever
-changes, these edits silently land on the wrong rows -- regenerate them from a
-fresh diff.
-
-Weak spots in the *derivable* logic, flagged rather than silently kept/fixed:
-
-- **``drop_duplicates()`` on the raw load** -- no ``subset``, no logging, and it
-  also collapses rows that differ only in a column dropped later.
-- **``area = area * 9`` for ``area < 1000``** on the price_per_sqft-IQR outliers
-  -- a blanket "this was recorded in square yards" assumption; a genuinely
-  small flat in that set gets inflated 9x.
-- **The price-column IQR analysis (notebook cells 6-10) is dead code** -- it
-  computes bounds and displays outliers but changes nothing. Not ported.
-- **Null ``price`` / ``area`` / ``price_per_sqft`` rows (18 each) are removed
-  only as a side effect** of ``NaN <= 50000`` being ``False`` in the threshold
-  filters, not by an explicit ``dropna``. Reproduced as-is.
-- **``price_per_sqft`` is recomputed twice** (once for the IQR outliers, once
-  for every row at the end); the first is redundant. Kept for fidelity.
+The area_room_ratio column, a drop of 33 low area/bedRoom rows, and a downward
+bedRoom fix on 70 house rows have no code in the source notebook. They're applied
+from the _RECONSTRUCTED_* / _MANUAL_* tables below, keyed by positional row index
+into cleaned_v2.csv - regenerate from a fresh input/output diff if row order
+changes. The 33 drops are a subset of the area/bedRoom < 183 rows; the 70 bedRoom
+fixes aren't a formula or a join to houses.csv.
 """
 
 from __future__ import annotations
@@ -63,9 +27,7 @@ BEDROOM_MAX = 10
 SQYD_AREA_THRESHOLD = 1_000
 SQYD_TO_SQFT = 9
 
-# integer columns that pandas < 2.0 DataFrame.update upcast to float64 as a
-# side effect (see _fix_price_per_sqft_outliers); the committed CSVs carry them
-# as float, so the port matches.
+# int columns that pandas < 2.0 DataFrame.update upcast to float; the committed CSVs carry that
 _UPDATE_UPCASTS_TO_FLOAT = [
     "bedRoom", "bathroom", "study room", "servant room", "store room",
     "pooja room", "others", "furnishing_type", "luxury_score",
@@ -74,8 +36,7 @@ _UPDATE_UPCASTS_TO_FLOAT = [
 # Crore -> rupees, for price_per_sqft = price / area.
 _CRORE = 10_000_000
 
-# --- hand-typed edits from the notebook (cells 33 / 35 / 67) ---------------- #
-# All keys are positional row indices in gurgaon_properties_cleaned_v2.csv.
+# hand-typed edits from notebook cells 33/35/67; keys are positional row indices
 _MANUAL_AREA_DROP = [818, 1796, 1123, 2, 2356, 115, 3649, 2503, 1471]
 _MANUAL_AREA_FIXES = {
     48: 115 * 9, 300: 7250, 2666: 5800, 1358: 2660,
@@ -83,8 +44,7 @@ _MANUAL_AREA_FIXES = {
 }
 _MANUAL_CARPET_FIXES = {2131: 1812}
 
-# --- edits with NO notebook cell, recovered from the input->output diff ----- #
-# 33 low area/bedRoom "garbage" rows the author dropped by hand.
+# recovered from the input->output diff (no notebook cell); positional row indices
 _RECONSTRUCTED_ROW_DROP = [
     37, 93, 229, 247, 387, 751, 753, 1106, 1206, 1429, 1562, 1580, 1696, 1737,
     1747, 1773, 1936, 1939, 1953, 1997, 2047, 2300, 2360, 2721, 2784, 2806,
@@ -124,9 +84,8 @@ def _price_per_sqft(price_cr: pd.Series, area_sqft: pd.Series) -> pd.Series:
 
 
 def _fix_price_per_sqft_outliers(df: pd.DataFrame) -> pd.DataFrame:
-    """For the ``price_per_sqft`` IQR outliers: treat a sub-1000 ``area`` as
-    square yards (``* 9``), then recompute ``price_per_sqft`` from
-    ``price / area`` and write both columns back (notebook cells 14-18)."""
+    """For the price_per_sqft IQR outliers: sub-1000 area treated as square
+    yards (*9), then price_per_sqft recomputed (notebook cells 14-18)."""
     df = df.copy()
     lo, hi = _iqr_bounds(df["price_per_sqft"])
     outliers = df[(df["price_per_sqft"] < lo) | (df["price_per_sqft"] > hi)].copy()
@@ -137,10 +96,7 @@ def _fix_price_per_sqft_outliers(df: pd.DataFrame) -> pd.DataFrame:
     outliers["price_per_sqft"] = _price_per_sqft(outliers["price"], outliers["area"])
     df.update(outliers)  # aligns on index; only non-NaN values overwrite
 
-    # pandas < 2.0 DataFrame.update upcast every column present in `other` to
-    # float64 (its internal where() fills the unmatched rows with NaN). pandas
-    # >= 2.0 preserves dtype, so the committed CSVs -- built on the old
-    # behaviour -- have these integer columns as float. Reproduce that here.
+    # pandas < 2.0 update upcast these to float; the committed CSVs carry that
     for col in _UPDATE_UPCASTS_TO_FLOAT:
         df[col] = df[col].astype(float)
 
@@ -149,12 +105,9 @@ def _fix_price_per_sqft_outliers(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _apply_threshold_filters(df: pd.DataFrame) -> pd.DataFrame:
-    """``price_per_sqft <= 50000``, ``area < 100000``, ``bedRoom <= 10`` --
-    interleaved with the manual index edits in the notebook's order.
-
-    Rows with a null ``price_per_sqft`` / ``area`` are dropped here as a side
-    effect (``NaN`` fails every comparison); the notebook relies on this rather
-    than a ``dropna``.
+    """price_per_sqft <= 50000, area < 100000, bedRoom <= 10, interleaved with
+    the manual index edits in the notebook's order. Null price_per_sqft / area
+    rows fall out here (NaN fails every comparison), not via dropna.
     """
     df = df.copy()
 
@@ -179,8 +132,7 @@ def _apply_threshold_filters(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _apply_reconstructed_edits(df: pd.DataFrame) -> pd.DataFrame:
-    """The two edits with no notebook cell (see the module docstring): drop the
-    33 hand-picked garbage rows, and correct ``bedRoom`` on 70 ``house`` rows."""
+    """Drop the 33 hand-picked rows and correct bedRoom on 70 house rows (see module docstring)."""
     df = df.copy()
 
     present = [i for i in _RECONSTRUCTED_ROW_DROP if i in df.index]
@@ -197,23 +149,13 @@ def _apply_reconstructed_edits(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def treat_outliers(df: pd.DataFrame) -> pd.DataFrame:
-    """Apply the outlier-treatment stage to a cleaned-v2 properties frame.
+    """Apply outlier treatment to a cleaned-v2 frame.
 
-    Steps, in notebook order: dedupe -> rescale price_per_sqft-IQR outlier
-    areas -> threshold filters interleaved with the manual area/carpet edits ->
-    recompute ``price_per_sqft`` for every row -> the two reconstructed edits ->
-    add ``area_room_ratio``.
-
-    Parameters
-    ----------
-    df
-        Freshly read ``gurgaon_properties_cleaned_v2.csv`` (23 columns, a plain
-        ``RangeIndex`` -- the ``_MANUAL_*`` / ``_RECONSTRUCTED_*`` tables key
-        off these positions).
-
-    Returns
-    -------
-    DataFrame with :data:`OUTPUT_COLUMNS` (24), index reset.
+    Steps in notebook order: dedupe -> rescale price_per_sqft-IQR outlier areas
+    -> threshold filters + manual edits -> recompute price_per_sqft ->
+    reconstructed edits -> add area_room_ratio. Input needs a plain RangeIndex
+    (the _MANUAL_* / _RECONSTRUCTED_* tables key off positions). Returns
+    OUTPUT_COLUMNS (24), index reset.
     """
     n_in = len(df)
     df = df.drop_duplicates()

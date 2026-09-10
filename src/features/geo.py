@@ -1,23 +1,10 @@
-"""Sector coordinates: join ``data/raw/latlong.csv`` onto listings and aggregate
-per sector for the price map (see ``notebooks/19_sector_price_map.ipynb``).
+"""Sector coordinates: join data/raw/latlong.csv onto listings and aggregate
+per sector for the price map.
 
-Ported from ``notebooks_original/data-visualization.ipynb`` (the sector map cells).
-The core join/aggregation functions have **no plotting dependency**;
-:func:`build_sector_map` imports ``plotly`` lazily.
-
-``latlong.csv`` has 129 sectors, the modelling data 104 -- mostly a superset,
-but three modelling sectors have no coordinates:
-
-* ``sector 70a`` -- recovered by :func:`join_sector_coordinates` via a
-  trailing-letter-suffix fallback (``sector 70a`` -> ``sector 70``), the same
-  ``37c``/``37`` inconsistency noted in ``docs/data_dictionary.md``. Reported as a
-  ``fallback`` match, distinct from an exact match.
-* ``dwarka expressway``, ``sohna road`` -- road names, not sector-suffix
-  variants; no fallback applies, left genuinely unmatched.
-
-Nothing is dropped silently: :func:`join_sector_coordinates` returns a report of
-what matched exactly, what matched by fallback, what was dropped, and how many
-rows each dropped sector cost.
+latlong.csv has 129 sectors, the modelling data 104. sector 70a is recovered as a
+"fallback" match (trailing-letter strip -> sector 70); dwarka expressway and
+sohna road are road names, left unmatched. join_sector_coordinates returns a
+report of what matched, what fell back, and what was dropped.
 """
 
 from __future__ import annotations
@@ -168,31 +155,12 @@ def build_sector_map(
     size: str = "built_up_area",
     zoom: float = 9.3,
 ):
-    """OpenStreetMap-tile bubble map: one bubble per sector, coloured by
-    ``color`` and sized by ``size``.
+    """OpenStreetMap-tile bubble map: one bubble per sector, coloured by `color`,
+    sized by `size`. A bubble map, not a filled choropleth - no public GeoJSON
+    for informal Gurgaon sector boundaries.
 
-    A bubble map, **not** a filled choropleth -- there is no public GeoJSON for
-    informal Gurgaon sector boundaries. Returns a
-    ``plotly.graph_objects.Figure``.
-
-    Known issue -- do not re-investigate in a notebook
-    -------------------------------------------------
-    ``px.scatter_map`` (and the deprecated ``px.scatter_mapbox``) render **blank**
-    -- correct colour legend / title / attribution, but no tiles and no bubbles
-    -- specifically inside **Jupyter / JupyterLab inline notebook output**. This
-    was pinned down with a side-by-side standalone-HTML test: *both* engines draw
-    tiles, roads, labels, bubbles and working hover tooltips perfectly **outside**
-    Jupyter (a plain browser). So it is a Jupyter inline-renderer bug with
-    MapLibre-based figures, not a bug in ``scatter_map`` or in this function.
-
-    Consequence: ``notebooks/19_sector_price_map.ipynb`` embeds
-    :func:`build_sector_map_static` (matplotlib) as its committed output, not this
-    figure. Keep using ``scatter_map`` here (current, non-deprecated).
-
-    **TODO when the Streamlit app exists:** confirm this figure renders correctly
-    *in Streamlit* directly -- Streamlit embeds Plotly differently from a Jupyter
-    cell, so it is very likely fine, but verify it there rather than assuming the
-    standalone-HTML pass covers it.
+    scatter_map renders blank in Jupyter inline output (works in a browser and in
+    Streamlit), so notebook 19 embeds build_sector_map_static instead.
     """
     import plotly.express as px  # lazy: the data functions don't need plotly
 
@@ -224,13 +192,9 @@ def build_sector_map_static(
     size: str = "built_up_area",
     annotate: int = 6,
 ):
-    """Matplotlib fallback for :func:`build_sector_map`.
-
-    Plots sector centroids as a lon/lat scatter, coloured by ``color`` and sized
-    by ``size`` -- the same encoding, minus the street basemap. Needed because
-    ``plotly``'s ``scatter_map`` renders blank under ``kaleido`` static export
-    (a known plotly-7 / MapLibre issue), so this is what the committed notebook
-    embeds. The priciest and cheapest ``annotate`` sectors are labelled.
+    """Matplotlib fallback for build_sector_map - same encoding, no street
+    basemap. Used because scatter_map renders blank in Jupyter inline output, so
+    this is what the notebook embeds. The priciest / cheapest sectors are labelled.
     Aspect is set equal; at ~28.4°N that slightly compresses longitude, fine for
     a rough spatial read.
     """

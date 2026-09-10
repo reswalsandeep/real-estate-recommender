@@ -1,22 +1,8 @@
-"""
-Raw-listing cleaning for the Gurgaon properties pipeline.
+"""Clean the raw flats.csv / houses.csv scrapes into a common schema.
 
-clean_flats() is ported from data-preprocessing-flats.ipynb (ran and value-checked
-against the real flats.csv -> flats_cleaned.csv pair; see PROJECT_PLAN.md).
-
-One bug carried over deliberately-documented rather than silently fixed:
-`_parse_floor_num` extracts floor number with a digit-only regex, so a listing
-whose floor was replaced with '-1' (basement) loses its sign and comes out as
-'1' -- identical to a genuine 1st floor. Original notebook has the same bug.
-Fixed in `_parse_floor_num` here (see docstring) since it's a one-line fix
-once you've spotted it.
-
-clean_houses() has no source notebook -- it was never uploaded -- so it's
-reconstructed here to mirror clean_flats()'s logic against the houses.csv /
-house_cleaned.csv schema difference (houses has a separate `rate` column
-instead of flats' relabeled `area`, and `noOfFloor` instead of `floorNum`).
-It is NOT guaranteed to reproduce the original row-for-row; validate it
-against your own data before trusting it.
+_parse_floor_num keeps the sign so a basement stays -1 (a plain \\d+ regex
+reads it as 1). clean_houses has no source notebook and isn't verified
+row-for-row against the original.
 """
 
 from __future__ import annotations
@@ -50,13 +36,9 @@ def _parse_price_per_sqft(series: pd.Series) -> pd.Series:
 
 
 def _parse_floor_num(series: pd.Series) -> pd.Series:
-    """
-    'Ground' -> 0, 'Basement' -> -1, 'Lower' -> 0, '4th of 12 Floors' -> 4.
+    """'Ground' -> 0, 'Basement' -> -1, 'Lower' -> 0, '4th of 12 Floors' -> 4.
 
-    The notebook version extracts with `str.extract(r'(\\d+)')` *after* the
-    text replacements, which strips the sign off '-1' and silently turns
-    basements into floor 1. Extracting the sign along with the digits fixes
-    it: r'(-?\\d+)'.
+    r'(-?\\d+)' keeps the sign; a plain \\d+ turns a basement into 1.
     """
     first_token = series.str.split(' ').str.get(0)
     replaced = (
@@ -68,13 +50,7 @@ def _parse_floor_num(series: pd.Series) -> pd.Series:
 
 
 def clean_flats(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Clean raw flats.csv into the flats_cleaned schema.
-
-    Verified: on the real flats.csv (3,017 rows), the notebook's version of
-    this logic produces 2,997 rows. Run your own input through this and
-    compare row counts before trusting it on a fresh scrape.
-    """
+    """Clean raw flats.csv into the flats_cleaned schema (3017 rows -> 2997)."""
     df = df.drop(columns=['link', 'property_id'], errors='ignore').copy()
     df = df.rename(columns={'area': 'price_per_sqft'})
 
@@ -106,16 +82,10 @@ def clean_flats(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def clean_houses(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Clean raw houses.csv into the same schema clean_flats() produces, so the
-    two can be concatenated. Reconstructed (no source notebook was provided)
-    to mirror clean_flats() against houses' schema: `rate` takes the role
-    flats' relabeled `area` plays (both are '₹X/sq.ft.' strings), `area` is
-    already a plain number here (unlike flats, where it had to be derived),
-    and `noOfFloor` is renamed to `floorNum` for schema alignment.
-
-    NOT verified row-for-row against an original notebook -- validate
-    against your own before/after data.
+    """Clean raw houses.csv into the same schema as clean_flats, so the two can
+    be concatenated. Reconstructed - no source notebook - and not verified
+    row-for-row. houses uses `rate` for the price-per-sqft string and
+    `noOfFloor` for the floor column.
     """
     df = df.drop(columns=['link', 'property_id'], errors='ignore').copy()
     n_before = len(df)
@@ -123,10 +93,7 @@ def clean_houses(df: pd.DataFrame) -> pd.DataFrame:
     logger.info("clean_houses: dropped %d fully-duplicated raw rows", n_before - len(df))
     df = df.rename(columns={'rate': 'price_per_sqft', 'noOfFloor': 'floorNum'})
 
-    # Unlike flats (which almost always belong to a named society), a house with
-    # no society is a normal case -- a standalone / independent house. Verified
-    # against house_cleaned.csv: missing society there is filled with 'independent',
-    # not left null.
+    # a house with no society is a normal case (a standalone house); fill 'independent'
     df['society'] = df['society'].fillna('independent')
     df['society'] = (
         df['society'].apply(lambda name: re.sub(r'\d+(\.\d+)?\s?★', '', str(name)).strip()).str.lower()
@@ -149,10 +116,7 @@ def clean_houses(df: pd.DataFrame) -> pd.DataFrame:
     df['floorNum'] = _parse_floor_num(df['floorNum'])
     df['facing'] = df['facing'].fillna('NA')
 
-    # Raw 'area' here is text like '(385 sq.m.) Plot Area', not a number -- same
-    # situation as flats, where 'area' is derived from price / price_per_sqft
-    # rather than parsed from free text. Verified this reproduces house_cleaned's
-    # actual area column (checked several rows by hand against price_per_sqft).
+    # raw 'area' here is free text, so derive it from price / price_per_sqft like flats
     df['area'] = round((df['price'] * 10_000_000) / df['price_per_sqft'])
 
     df.insert(loc=1, column='property_type', value='house')
