@@ -1,0 +1,34 @@
+# Core data stack (matches versions already present in the base interpreter)
+pandas>=2.2,<3
+numpy>=2.0,<3
+
+# Modelling — added for the Section 5 model-training layer
+scikit-learn>=1.9,<2   # >=1.9: committed models/price_pipeline.pkl was built with 1.9.0; unpickling wants a matching minor
+joblib>=1.3
+
+# Explainability — src/models/explain.py (Section 5 point 4)
+shap>=0.44
+matplotlib>=3.7   # SHAP plots + the committed sector-price map (Section 4)
+
+# Sector price map — src/features/geo.py (Section 4)
+plotly>=5.24,<6   # scatter_mapbox (dropped in Plotly 7) is the only OSM map that renders inside Streamlit here — scatter_map / MapLibre paints blank
+
+# Streamlit app — app/ (Section 12)
+streamlit>=1.40   # st.navigation / st.Page need >=1.36
+wordcloud>=1.9    # amenities word cloud on the Market Insights page
+
+# Notebook execution for the notebooks/ rebuild (all 16 numbered notebooks)
+jupyter>=1.0
+nbconvert>=7
+ipykernel>=6
+
+# Faithful rebuild of the 16 original notebooks (notebooks/01..16) — libraries the
+# originals actually used, restored so their real code executes rather than being
+# rewritten around. src/ does NOT depend on any of these.
+seaborn>=0.13         # EDA + outlier + missing-value + feature-selection notebooks (distplot/positional calls fixed to the 0.13 API)
+statsmodels>=0.14     # insights-module.ipynb: sm.OLS coefficient summary
+xgboost>=2.0          # model-selection.ipynb: XGBRegressor, one of the 11 compared families
+category_encoders>=2.6  # model-selection.ipynb: ce.TargetEncoder (falls back to sklearn TargetEncoder if it won't resolve against sklearn 1.9)
+
+# Test suite — tests/ (focused parser / logic checks, not full coverage)
+pytest>=8
